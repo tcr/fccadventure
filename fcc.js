@@ -252,10 +252,10 @@ function allSteps (emitter, listener) {
 
   console.log('')
   console.log('')
-  console.log('ipk', IPK)
-  console.log('bitrate', BITRATE)
-  console.log('country', COUNTRY)
-  console.log('channel', CHANNEL)
+  console.log('ipk:     ', IPK)
+  console.log('bitrate: ', BITRATE)
+  console.log('country: ', COUNTRY)
+  console.log('channel: ', CHANNEL)
   console.log('')
   console.log('')
 
