@@ -250,6 +250,15 @@ function allSteps (emitter, listener) {
     var CHANNEL = 'iw mon0 set channel ' + (parseInt(channel) - 4);
   }
 
+  console.log('')
+  console.log('')
+  console.log('ipk', IPK)
+  console.log('bitrate', BITRATE)
+  console.log('country', COUNTRY)
+  console.log('channel', CHANNEL)
+  console.log('')
+  console.log('')
+
   setupEmitter(emitter, listener, function () {
     installIpk(emitter, IPK, function () {
       monitor(emitter, function () {
