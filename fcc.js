@@ -211,7 +211,15 @@ function reboot (tessel, next) {
 
 function installIpk (emitter, ipk, next) {
   console.log('selecting ipk...');
-  command(emitter, 'opkg install ' + ipk, function () {
+  command(emitter, 'opkg install ' + ipk, function (out) {
+    console.error(out)
+    if (out.match(/cannot satisfy/)) {
+      console.error('')
+      console.error('ERROR: kernel version is too old.')
+      console.error('ERROR: inform Jialiya or Tim immediately.')
+      process.exit(1)
+    }
+
     reboot(emitter, function () {
       next();
     })
@@ -247,7 +255,7 @@ function allSteps (emitter, listener) {
   if (mode == 'B' || mode == 'G') {
     var CHANNEL = 'iw mon0 set channel ' + channel;
   } else {
-    var CHANNEL = 'iw mon0 set channel ' + (parseInt(channel) - 4);
+    var CHANNEL = 'iw mon0 set channel ' + (parseInt(channel) - 4) + ' "HT40+"';
   }
 
   console.log('')
