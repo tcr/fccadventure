@@ -66,6 +66,7 @@ function getName (emitter, next) {
 function upload (tessel, file, dest, next) {
   var docommand = false;
   file = file.toString('base64') + '\n'
+  totallen = file.length;
   tessel.on('data', function listener (data) {
     if (!docommand && data.toString().match(/^DOCOMMAND/m)) {
       // docommand = true;
@@ -78,8 +79,8 @@ function upload (tessel, file, dest, next) {
           docommand = true
         }
         tessel.write('printf \'' + c + '\' >> /tmp/serialfile\n');
-        process.stdout.write('. ')
-      }, 100);
+        process.stdout.write(Math.floor(((totallen-file.length)/totallen)*100) + '% ')
+      }, 50);
       return;
     }
     // if (docommand) {
@@ -139,6 +140,8 @@ function scp (tessel, data, dest, next) {
     }
 
     // Upload that file.
+    console.log('expected:', md5(data))
+    console.log('found:', match);
     console.log('uploading to', dest, '...');
     upload(tessel, data, dest, function () {
       console.log('checking integrity...');
@@ -213,10 +216,10 @@ function installIpk (emitter, ipk, next) {
   console.log('selecting ipk...');
   command(emitter, 'opkg install ' + ipk, function (out) {
     console.error(out)
-    if (out.match(/cannot satisfy/)) {
+    if (out.match(/Cannot satisfy/i)) {
       console.error('')
-      console.error('ERROR: kernel version is too old.')
-      console.error('ERROR: inform Jialiya or Tim immediately.')
+      console.error('ERROR: kernel version is incorrect!!!')
+      console.error('ERROR: inform Jialiya or Tim immediately!!!')
       process.exit(1)
     }
 
