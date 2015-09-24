@@ -70,6 +70,7 @@ function upload (tessel, file, dest, next) {
   tessel.on('data', function listener (data) {
     if (!docommand && data.toString().match(/^DOCOMMAND/m)) {
       // docommand = true;
+      process.stdout.write('0%')
       var id = setInterval(function () {
         var c = file.slice(0, 64)
         // console.log('>>', c);
@@ -77,9 +78,10 @@ function upload (tessel, file, dest, next) {
         if (file.length == 0) {
           clearInterval(id);
           docommand = true
+          process.stdout.write('\n')
         }
         tessel.write('printf \'' + c + '\' >> /tmp/serialfile\n');
-        process.stdout.write(Math.floor(((totallen-file.length)/totallen)*100) + '% ')
+        process.stdout.write('\r' + Math.floor(((totallen-file.length)/totallen)*100) + '% ')
       }, 50);
       return;
     }
@@ -187,7 +189,11 @@ function setupListener (emitter, listener, next) {
   settle(listener, function () {
     scp(listener, fs.readFileSync(__dirname + '/ipk/packetspammer'), '/usr/bin/packetspammer', function () {
       command(listener, 'chmod +x /usr/bin/packetspammer', function () {
-        next(emitter, listener);
+        scp(listener, fs.readFileSync(__dirname + '/ipk/tcpdump.ipk'), '/root/tcpdump.ipk', function () {
+          scp(listener, fs.readFileSync(__dirname + '/ipk/libpcap.ipk'), '/root/libpcap.ipk', function () {
+            next(emitter, listener);
+          });
+        });
       });
     });
   })
@@ -212,7 +218,7 @@ function reboot (tessel, next) {
   })
 }
 
-function installIpk (emitter, ipk, next) {
+function installIpk (emitter, ipk, doreboot, next) {
   console.log('selecting ipk...');
   command(emitter, 'opkg install ' + ipk, function (out) {
     console.error(out)
@@ -223,9 +229,13 @@ function installIpk (emitter, ipk, next) {
       process.exit(1)
     }
 
-    reboot(emitter, function () {
+    if (doreboot) {
+      reboot(emitter, function () {
+        next();
+      })
+    } else {
       next();
-    })
+    }
   })
 }
 
@@ -271,13 +281,17 @@ function allSteps (emitter, listener) {
   console.log('')
 
   setupEmitter(emitter, listener, function () {
-    installIpk(emitter, IPK, function () {
+    installIpk(emitter, IPK, true, function () {
       monitor(emitter, function () {
         if (!listener) {
           afterSetup();
         } else {
           setupListener(emitter, listener, function () {
-            monitor(listener, afterSetup);
+            installIpk(listener, '/root/libpcap.ipk', false, function () {
+              installIpk(listener, '/root/tcpdump.ipk', false, function () {
+                monitor(listener, afterSetup);
+              });
+            });
           });
         }
       });
