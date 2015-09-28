@@ -24,29 +24,17 @@ function launch (next) {
     }
 
     console.log('starting...')
-    next(new sp.SerialPort(emitter.comName, {
+    var esp = new sp.SerialPort(emitter.comName, {
       baudrate: 115200
-    }), listener && new sp.SerialPort(listener.comName, {
+    });
+    var lsp = listener && new sp.SerialPort(listener.comName, {
       baudrate: 115200
-    }));
-  });
-}
+    });
 
-function getName (emitter, next) {
-  emitter.on('data', function listener (data) {
-    if (data.toString().match(/root@.*?:/)) {
-      var id = data.toString().match(/root@(.*?):/)[1];
-      clearInterval(sid);
-      emitter.removeListener('data', listener);
-      next(id)
-    }
-  })
-  var sid = setInterval(function () {
-    emitter.write('\n');
-    setTimeout(function () {
-      emitter.write('\x03');
-    }, 250);
-  }, 500);
+    require('fs').appendFileSync('log-emitter.txt', '\n\n\n\n\n\n' + (new Date()).toString() + '\n' + '$ ' + process.argv.join(' ') + '\n');
+    esp.pipe(fs.createWriteStream('log-emitter.txt', {flags: 'a'}))
+    next(esp, lsp);
+  });
 }
 
 function upload (tessel, file, dest, next) {
@@ -58,9 +46,11 @@ function upload (tessel, file, dest, next) {
       // docommand = true;
       process.stdout.write('0%')
       var id = setInterval(function () {
-        var c = file.slice(0, 64)
+        var SIZE = 128;
+
+        var c = file.slice(0, SIZE)
         // console.log('>>', c);
-        file = file.slice(64);
+        file = file.slice(SIZE);
         if (file.length == 0) {
           clearInterval(id);
           docommand = true
@@ -106,14 +96,6 @@ function command (tessel, command, next) {
   tessel.write('\x03\x03echo DOCOMMAND\n')
 }
 
-function getPrompts (emitter, listener, next) {
-  getName(emitter, function () {
-    !listener ? next(emitter, listener) : getName(listener, function () {
-      next(emitter, listener);
-    })
-  })
-}
-
 function md5 (buf) {
   return crypto.createHash('md5').update(buf).digest("hex")
 }
@@ -141,17 +123,44 @@ function scp (tessel, data, dest, next) {
 function settle (tessel, next) {
   console.log('waiting for', tessel.path, '...');
   var buf = '';
+
   tessel.on('data', function listener (data) {
+    var until = data.toString().match(/\[\s*(\d+)\.\d+\s*\]/m);
+    if (until) {
+      allow = parseInt(until[1]);
+      var MAXWAIT = 30;
+      if (allow < MAXWAIT) {
+        console.log('we are %s seconds into boot mode, wait up to %s s...', allow, MAXWAIT)
+        tessel.removeListener('data', listener);
+        clearInterval(intid);
+        setTimeout(function () {
+          settle(tessel, next);
+        }, (MAXWAIT-allow)*1000);
+      }
+    }
+
     buf += data.toString();
-    if (buf.match(/(root@\S+\s*\r?\n?){10}$/)) {
+    if (buf.match(/(root@(?!\(none\))\S+\s*\r?\n?){10}$/)) {
       console.log('booted!');
       tessel.removeListener('data', listener);
       clearInterval(intid);
       next();
     }
   });
+
+  var COUNTMAX = 5*2;
+  var count = 0;
   var intid = setInterval(function () {
-    tessel.write('\n\x03');
+    if (count == 32*2) { 
+      tessel.write('\x04'); // Ctrl+D in case we are caught
+    }
+
+    if (count > COUNTMAX) {
+      tessel.write('\n\n\x03');
+    } else {
+      tessel.write('\n\n');
+    }
+    count = count + 1;
   }, 500);
 }
 
@@ -162,11 +171,25 @@ function terminate (emitter, listener) {
 }
 
 exports.launch = launch;
-exports.getName = getName;
 exports.upload = upload;
 exports.command = command;
-exports.getPrompts = getPrompts;
 exports.md5 = md5;
 exports.scp = scp;
 exports.settle = settle;
 
+(function () {
+  require('fs').appendFileSync('log-commands.txt', '\n\n\n\n\n\n' + (new Date()).toString() + '\n' + '$ ' + process.argv.join(' ') + '\n');
+  var all = fs.createWriteStream('log-commands.txt', {flags: 'a'});
+
+  var w1 = process.stdout.write;
+  process.stdout.write = function () {
+    all.write.apply(all, arguments);
+    return w1.apply(process.stdout, arguments);
+  }
+
+  var w2 = process.stderr.write;
+  process.stderr.write = function () {
+    all.write.apply(all, arguments);
+    return w2.apply(process.stderr, arguments);
+  }
+})();

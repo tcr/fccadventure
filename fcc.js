@@ -1,10 +1,14 @@
+var fs = require('fs');
 var fcc = require('./lib')
 var minimist = require('minimist');
 
 function monitor (tessel, next) {
   fcc.command(tessel, 'ifconfig wlan0 down', function (out) {
+    // console.log('wlan0', out);
     fcc.command(tessel, 'iw dev wlan0 interface add mon0 type monitor', function (out) {
+      // console.log(out);
       fcc.command(tessel, 'ifconfig mon0 up', function (out) {
+        // console.log(out);
         next();
       })
     })
@@ -45,10 +49,10 @@ function allSteps (emitter, listener) {
 
   console.log('')
   console.log('')
-  console.log('ipk:     ', IPK)
-  console.log('bitrate: ', BITRATE)
-  console.log('country: ', COUNTRY)
-  console.log('channel: ', CHANNEL)
+  console.log('kmodconf:  ', IPK)
+  console.log('bitrate:   ', BITRATE)
+  console.log('country:   ', COUNTRY)
+  console.log('channel:   ', CHANNEL)
   console.log('')
   console.log('')
 
@@ -85,7 +89,10 @@ function allSteps (emitter, listener) {
       process.stdout.write(out.toString().replace(/^/mg, 'TRANSMIT: '));
     }
     fcc.command(emitter, 'packetspammer -d400000 mon0', function () {
-      console.error('!!!!! why did transmitter stop?');
+      console.error('')
+      console.error('error: transmitter stopped!');
+      console.error('please re-launch fcc test.');
+      process.exit(1);
     })
 
     // Receiver
@@ -94,8 +101,11 @@ function allSteps (emitter, listener) {
       function receiveDump (out) {
         process.stdout.write(out.toString().replace(/^/mg, 'receiver: '));
       }
-      fcc.command(listener, "tcpdump -y ieee802_11_radio -i mon0 -vvv 'ether host 13:22:33:44:55:66'", function () {
-        console.error('!!!!! why did receiver stop?');
+      fcc.command(listener, "while true; do tcpdump -y ieee802_11_radio -i mon0 -vvv 'ether host 13:22:33:44:55:66'; done", function () {
+        console.error('')
+        console.error('error: receiver stopped!');
+        console.error('please re-launch fcc test.');
+        process.exit(1);
       })
     }
   }

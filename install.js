@@ -4,16 +4,20 @@ var sp = require('serialport');
 var fcc = require('./lib')
 var minimist = require('minimist');
 
-function reboot (tessel, next) {
+function reboot (tessel, wait, next) {
   fcc.command(tessel, 'reboot', function (out) {
-    console.log('rebooting tessel (40s)...');
-    setTimeout(function () {
-      fcc.settle(tessel, next);
-    }, 40*1000);
+    if (wait) {
+      console.log('rebooting tessel (40s)...');
+      setTimeout(function () {
+        fcc.settle(tessel, next);
+      }, 40*1000);
+    } else {
+      next();
+    }
   })
 }
 
-function installIpk (emitter, ipk, doreboot, next) {
+function installIpk (emitter, ipk, next) {
   console.log('selecting ipk...');
   fcc.command(emitter, 'opkg install ' + ipk, function (out) {
     console.error(out)
@@ -24,13 +28,7 @@ function installIpk (emitter, ipk, doreboot, next) {
       process.exit(1)
     }
 
-    if (doreboot) {
-      reboot(emitter, function () {
-        next();
-      })
-    } else {
-      next();
-    }
+    next();
   })
 }
 
@@ -54,11 +52,11 @@ function setupListener (emitter, listener, next) {
   fcc.settle(listener, function () {
     fcc.scp(listener, fs.readFileSync(__dirname + '/ipk/packetspammer'), '/usr/bin/packetspammer', function () {
       fcc.command(listener, 'chmod +x /usr/bin/packetspammer', function () {
-        // scp(listener, fs.readFileSync(__dirname + '/ipk/tcpdump.ipk'), '/root/tcpdump.ipk', function () {
-        //   scp(listener, fs.readFileSync(__dirname + '/ipk/libpcap.ipk'), '/root/libpcap.ipk', function () {
+        fcc.scp(listener, fs.readFileSync(__dirname + '/ipk/tcpdump.ipk'), '/root/tcpdump.ipk', function () {
+          fcc.scp(listener, fs.readFileSync(__dirname + '/ipk/libpcap.ipk'), '/root/libpcap.ipk', function () {
             next(emitter, listener);
-        //   });
-        // });
+          });
+        });
       });
     });
   })
@@ -68,18 +66,22 @@ function dosteps (emitter, listener) {
   var IPK = '/root/kmod-rt2x00lib.ipk';
 
   setupEmitter(emitter, listener, function () {
-    installIpk(emitter, IPK, false, function () {
-      if (!listener) {
-        afterSetup();
-      } else {
-        setupListener(emitter, listener, function () {
-          installIpk(listener, '/root/libpcap.ipk', false, function () {
-            installIpk(listener, '/root/tcpdump.ipk', false, function () {
-              afterSetup();
+    installIpk(emitter, IPK, function () {
+      reboot(emitter, false, function () {
+        if (!listener) {
+          afterSetup();
+        } else {
+          setupListener(emitter, listener, function () {
+            installIpk(listener, '/root/libpcap.ipk', function () {
+              installIpk(listener, '/root/tcpdump.ipk', function () {
+                reboot(listener, false, function () {
+                  afterSetup();
+                })
+              });
             });
           });
-        });
-      }
+        }
+      });
     });
   });
 
