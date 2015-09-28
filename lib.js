@@ -5,13 +5,19 @@ var sp = require('serialport');
 function launch (next) {
   sp.list(function (err, ports) {
     var tessels = ports.filter(function (port) {
-      return port.manufacturer.match(/Technical Machine/)
+      console.log('checking port', port.comName, '...')
+      return port.comName.match(/ttyACM|ttyUSB|usbmodem|COM/);
     }).sort(function (a, b) {
       return a.comName < b.comName ? -1 : a.comName > b.comName ? 1 : 0;
+    }).map(function (port) {
+      console.log('found tessel', port.comName, '...')
+      return port;
     });
 
+    console.error('');
+
     if (tessels.length < 1) {
-      console.error('ERR! cannot find a tessel attached to this computer')
+      console.error('ERR! cannot find any tessels attached to this computer')
       process.exit(1)
     }
 
