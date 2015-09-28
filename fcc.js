@@ -101,7 +101,7 @@ function allSteps (emitter, listener) {
       function receiveDump (out) {
         process.stdout.write(out.toString().replace(/^/mg, 'receiver: '));
       }
-      fcc.command(listener, "while true; do tcpdump -y ieee802_11_radio -i mon0 -vvv 'ether host 13:22:33:44:55:66'; done", function () {
+      fcc.command(listener, "tcpdump -y ieee802_11_radio -i mon0 -vvv 'ether host 13:22:33:44:55:66' || tcpdump -y ieee802_11_radio -i mon0 -vvv 'ether host 13:22:33:44:55:66' || tcpdump -y ieee802_11_radio -i mon0 -vvv 'ether host 13:22:33:44:55:66'", function () {
         console.error('')
         console.error('error: receiver stopped!');
         console.error('please re-launch fcc test.');
@@ -114,11 +114,11 @@ function allSteps (emitter, listener) {
 var argv = minimist(process.argv.slice(2));
 
 if (!argv.mode || !argv.hz || !argv.rate || !argv.channel) {
-  console.error('Usage: node fcc.js');
-  console.error('    node fcc.js --mode=B --hz=20 --rate=11 --channel=11');
-  console.error('    node fcc.js --mode=G --hz=20 --rate=24 --channel=11');
-  console.error('    node fcc.js --mode=N --hz=20 --rate=8 --channel=11');
-  console.error('    node fcc.js --mode=N --hz=40 --rate=8 --channel=11');
+  console.error('Usage: sudo node fcc.js');
+  console.error('    sudo node fcc.js --mode=B --hz=20 --rate=11 --channel=11');
+  console.error('    sudo node fcc.js --mode=G --hz=20 --rate=24 --channel=11');
+  console.error('    sudo node fcc.js --mode=N --hz=20 --rate=8 --channel=11');
+  console.error('    sudo node fcc.js --mode=N --hz=40 --rate=8 --channel=11');
   process.exit(1)
 }
 
