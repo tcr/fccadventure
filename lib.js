@@ -6,7 +6,7 @@ function launch (next) {
   sp.list(function (err, ports) {
     var tessels = ports.filter(function (port) {
       console.log('checking port', port.comName, '...')
-      return port.comName.match(/ttyACM|ttyUSB|usbmodem|COM/);
+      return port.comName.match(/ttyACM|usbmodem|COM/);
     }).sort(function (a, b) {
       return a.comName < b.comName ? -1 : a.comName > b.comName ? 1 : 0;
     }).map(function (port) {
