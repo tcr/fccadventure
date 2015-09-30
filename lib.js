@@ -83,7 +83,14 @@ function command (tessel, command, next) {
   var docommand = false;
   console.log('+', command);
   command += '\n'
-  output = [];
+  output = '';
+
+  var tid = setTimeout(function () {
+    console.error('')
+    console.error('error: command "' + command + '" took longer than 60s to complete.');
+    console.error('this should not happen. please report to Jialiya or Tim this error.');
+    process.exit(1);
+  }, 60*1000);
   tessel.on('data', function listener (data) {
     if (!docommand && data.toString().match(/^DOCOMMAND/m)) {
       docommand = true;
@@ -91,12 +98,13 @@ function command (tessel, command, next) {
       return;
     }
     if (docommand) {
-      output.push(data);
+      output += data.toString();
       // console.log(data.toString());
     }
-    if (docommand && data.toString().match(/root@.*?:/)) {
+    if (docommand && output.match(/root@.*?:/)) {
       tessel.removeListener('data', listener);
-      next(Buffer.concat(output).toString().replace(/.*?\r\n/, '').replace(/(root@.*?:\S+\s*\r?\n?)*$/, ''))
+      clearTimeout(tid);
+      next(output.replace(/.*?\r\n/, '').replace(/(root@.*?:\S+\s*\r?\n?)*$/, ''))
     }
   })
   tessel.write('\x03\x03echo DOCOMMAND\n')
