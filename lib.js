@@ -139,7 +139,9 @@ function settle (tessel, next) {
   var buf = '';
 
   tessel.on('data', function listener (data) {
-    var until = data.toString().match(/\[\s*(\d+)\.\d+\s*\]/m);
+    buf += data.toString();
+
+    var until = buf.match(/\[\s*(\d+)\.\d+\s*\]/m);
     if (until) {
       allow = parseInt(until[1]);
       var MAXWAIT = 30;
@@ -153,7 +155,6 @@ function settle (tessel, next) {
       }
     }
 
-    buf += data.toString();
     if (buf.match(/(root@(?!\(none\))\S+\s*\r?\n?){10}$/)) {
       console.log('booted!');
       tessel.removeListener('data', listener);
