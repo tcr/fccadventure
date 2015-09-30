@@ -93,7 +93,7 @@ function allSteps (emitter, listener) {
       console.error('error: transmitter stopped!');
       console.error('please re-launch fcc test.');
       process.exit(1);
-    })
+    }, true)
 
     // Receiver
     if (listener) {
@@ -106,7 +106,7 @@ function allSteps (emitter, listener) {
         console.error('error: receiver stopped!');
         console.error('please re-launch fcc test.');
         process.exit(1);
-      })
+      }, true)
     }
   }
 }

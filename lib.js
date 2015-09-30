@@ -79,13 +79,16 @@ function upload (tessel, file, dest, next) {
 }
 
 
-function command (tessel, command, next) {
+function command (tessel, command, next, forever) {
   var docommand = false;
   console.log('+', command);
   command += '\n'
   output = '';
 
   var tid = setTimeout(function () {
+    if (forever) {
+      return;
+    }
     console.error('')
     console.error('error: command "' + command + '" took longer than 60s to complete.');
     console.error('this should not happen. please report to Jialiya or Tim this error.');
