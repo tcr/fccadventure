@@ -88,7 +88,7 @@ function allSteps (emitter, listener) {
     function transmitDump (out) {
       process.stdout.write(out.toString().replace(/^/mg, 'TRANSMIT: '));
     }
-    fcc.command(emitter, 'packetspammer -d400000 mon0', function () {
+    fcc.command(emitter, 'packetspammer -d400 mon0', function () {
       console.error('')
       console.error('error: transmitter stopped!');
       console.error('please re-launch fcc test.');
