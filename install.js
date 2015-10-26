@@ -20,12 +20,14 @@ function reboot (tessel, wait, next) {
 function installIpk (emitter, ipk, next) {
   console.log('selecting ipk...');
   fcc.command(emitter, 'opkg install ' + ipk, function (out) {
-    console.error(out)
-    if (out.match(/Cannot satisfy/i)) {
+    if (out.match(/Cannot satisfy/i) || out.match(/Not downgrading/i)) {
       console.error('')
       console.error('ERROR: kernel version is incorrect!!!')
       console.error('ERROR: inform Jialiya or Tim immediately!!!')
+      console.error('ERROR:', out.replace(/^\s+|\s+$/g, ''));
       process.exit(1)
+    } else {
+      console.error(out)
     }
 
     next();
