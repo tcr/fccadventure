@@ -4,7 +4,7 @@ var minimist = require('minimist');
 
 function allSteps (emitter, listener) {
   var ssid = argv.name;
-  var password = argv.password;
+  var password = argv.password || '';
   var tx = argv.txpower;
 
   // Transmit
@@ -15,7 +15,7 @@ function allSteps (emitter, listener) {
   fcc.settle(emitter, function () {
     fcc.command(emitter, [
       ['uci', 'set', 'wireless.@wifi-iface[0].ssid=' + ssid].join(' '),
-      !password ? '' : ['uci', 'set', 'wireless.@wifi-iface[0].key=' + password].join(' '),
+      ['uci', 'set', 'wireless.@wifi-iface[0].key=' + password].join(' '),
       ['uci', 'set', 'wireless.@wifi-device[0].disabled=0'].join(' '),
       ['uci', 'set', 'wireless.@wifi-device[0].txpower=' + tx].join(' '),
       ['uci', 'commit', 'wireless'].join(' '),
