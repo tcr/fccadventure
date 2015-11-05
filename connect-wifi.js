@@ -14,12 +14,14 @@ function allSteps (emitter, listener) {
 
   fcc.settle(emitter, function () {
     fcc.command(emitter, [
+      'iw reg set JP',
       ['uci', 'set', 'wireless.@wifi-iface[0].ssid=' + ssid].join(' '),
       ['uci', 'set', 'wireless.@wifi-iface[0].key=' + password].join(' '),
       ['uci', 'set', 'wireless.@wifi-device[0].disabled=0'].join(' '),
       ['uci', 'set', 'wireless.@wifi-device[0].txpower=' + tx].join(' '),
       ['uci', 'commit', 'wireless'].join(' '),
       'wifi',
+      'iw reg set JP',
     ].join('; '), function () {
       console.log('done.')
       process.exit(0);
