@@ -39,8 +39,11 @@ function setupEmitter (emitter, listener, next) {
     fcc.scp(emitter, fs.readFileSync(__dirname + '/ipk/kmod-rt2x00lib.ipk'), '/root/kmod-rt2x00lib.ipk', function () {
       // fcc.scp(emitter, fs.readFileSync(__dirname + '/ipk/kmod-rt2x00-lib-htonly.ipk'), '/root/kmod-rt2x00-lib-htonly.ipk', function () {
         // fcc.scp(emitter, fs.readFileSync(__dirname + '/ipk/kmod-rt2x00-lib-ht40only.ipk'), '/root/kmod-rt2x00-lib-ht40only.ipk', function () {
+          console.log('finished with kmod-rt2x00lib...')
           fcc.scp(emitter, fs.readFileSync(__dirname + '/ipk/packetspammer'), '/usr/bin/packetspammer', function () {
+            console.log('packetspammer...')
             fcc.command(emitter, 'chmod +x /usr/bin/packetspammer', function () {
+              console.log('set permissions...')
               next(emitter, listener)
             });
           });
