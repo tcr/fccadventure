@@ -49,7 +49,7 @@ function allSteps (emitter, listener) {
   }
 
   if (parseInt(channel) > 11 && txpower) {
-    var TXPOWER = 'iw mon0 set txpower fixed ' + txpower + '00';
+    var TXPOWER = 'iw dev wlan0 set txpower fixed' + txpower + '00';
   } else {
     var TXPOWER = '';
   }
