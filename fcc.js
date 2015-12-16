@@ -20,6 +20,7 @@ function allSteps (emitter, listener) {
   var hz = String(argv.hz); // '20';
   var rate = String(argv.rate); // '6'
   var channel = String(argv.channel); // '11';
+  var txpower = String(argv.txpower); // '10';
 
   if (mode == 'B' || mode == 'G') {
     var IPK = 'rm -f /FCC_HT; rm -f /FCC_40'; // /root/kmod-rt2x00-lib.ipk';
@@ -47,12 +48,19 @@ function allSteps (emitter, listener) {
     var CHANNEL = 'iw mon0 set channel ' + (parseInt(channel) - 4) + ' "HT40+"';
   }
 
+  if (parseInt(channel) > 11 && txpower) {
+    var TXPOWER = 'iw mon0 set txpower fixed ' + txpower + '00';
+  } else {
+    var TXPOWER = '';
+  }
+
   console.log('')
   console.log('')
   console.log('kmodconf:  ', IPK)
   console.log('bitrate:   ', BITRATE)
   console.log('country:   ', COUNTRY)
   console.log('channel:   ', CHANNEL)
+  console.log('txpower:   ', TXPOWER)
   console.log('')
   console.log('')
 
@@ -71,7 +79,7 @@ function allSteps (emitter, listener) {
   });
 
   function afterSetup () {
-    fcc.command(emitter, COUNTRY + '; ' + CHANNEL + '; ' + BITRATE + '; ' + IPK, function () {
+    fcc.command(emitter, COUNTRY + '; ' + TXPOWER + '; ' + CHANNEL + '; ' + BITRATE + '; ' + IPK, function () {
       if (!listener) {
         execute();
       } else {
@@ -115,10 +123,10 @@ var argv = minimist(process.argv.slice(2));
 
 if (!argv.mode || !argv.hz || !argv.rate || !argv.channel) {
   console.error('Usage: sudo node fcc.js');
-  console.error('    sudo node fcc.js --mode=B --hz=20 --rate=11 --channel=11');
-  console.error('    sudo node fcc.js --mode=G --hz=20 --rate=24 --channel=11');
-  console.error('    sudo node fcc.js --mode=N --hz=20 --rate=8 --channel=11');
-  console.error('    sudo node fcc.js --mode=N --hz=40 --rate=8 --channel=11');
+  console.error('    sudo node fcc.js --mode=B --hz=20 --rate=11 --channel=11 --txpower=20');
+  console.error('    sudo node fcc.js --mode=G --hz=20 --rate=24 --channel=11 --txpower=20');
+  console.error('    sudo node fcc.js --mode=N --hz=20 --rate=8 --channel=11 --txpower=20');
+  console.error('    sudo node fcc.js --mode=N --hz=40 --rate=8 --channel=11 --txpower=20');
   process.exit(1)
 }
 
